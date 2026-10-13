@@ -1,3 +1,10 @@
+import { AppProvider } from "./provider/AppProvider";
+import { AppRouter } from "./router/AppRouter";
+
 export function App() {
-  return <h1 className="p-8 text-3xl font-bold text-blue-600">It works</h1>;
+  return (
+    <AppProvider>
+      <AppRouter />
+    </AppProvider>
+  );
 }
