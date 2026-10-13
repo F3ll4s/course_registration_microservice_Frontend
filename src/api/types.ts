@@ -34,3 +34,21 @@ export type PrereqResult = {
 
 /** A section joined with its course. Sections carry no title or credits, so every view renders this. */
 export type SectionRow = { section: Section; course: Course };
+
+// The three shapes below are not confirmed by the backend team yet (README section 5, requests 1 to 3).
+// They are what the UI needs; adjust them here once the real endpoints exist.
+
+export type Enrollment = {
+  section_id: number;
+  status: "STAGED" | "OFFERED" | "ENROLLED" | "DROPPED" | "WAITLISTED";
+};
+
+export type WaitlistEntry = {
+  offer_id: number;
+  section_id: number;
+  position: number; // 1 = next in line
+  status: "WAITLISTED" | "OFFERED";
+  expires_at: string | null; // set once a seat is offered
+};
+
+export type Student = { student_id: string; completed_courses: string[] };
