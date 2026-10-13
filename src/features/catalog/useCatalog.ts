@@ -31,3 +31,6 @@ export function useCatalog(f: CatalogFilters) {
     error: courses.error ?? sections.error,
   };
 }
+
+// No filters: every section. Used to join section ids (cart, enrollments, waitlist) with their course.
+export const ALL_SECTIONS: CatalogFilters = { search: "", department: "", openOnly: false };
