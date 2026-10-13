@@ -1,4 +1,5 @@
 import { ApiError, api } from "./client";
+import type { Enrollment, WaitlistEntry } from "./types";
 
 export type EnrollResult = {
   status: "ENROLLED" | "WAITLISTED" | "REJECTED";
@@ -40,3 +41,8 @@ export const claimWaitlist = (offerId: number) =>
     method: "POST",
     body: JSON.stringify({ offer_id: offerId }),
   });
+
+// Assumed paths (README section 5, requests 2 and 3): not confirmed by the backend team yet
+export const getMyEnrollments = () => api<Enrollment[]>("/enrollments/me");
+
+export const getMyWaitlist = () => api<WaitlistEntry[]>("/waitlist/me");

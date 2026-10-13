@@ -1,24 +1,31 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { AppLayout } from "@/app/layouts/AppLayout";
 import { ProtectedRoute } from "@/app/ProtectedRoute";
-
-// Stand-in until the real page exists. Replace each <Placeholder /> below with the page component.
-function Placeholder({ title }: { title: string }) {
-  return <h1 className="p-8 text-2xl font-semibold">{title}</h1>;
-}
+import { LoginPage } from "@/features/auth/LoginPage";
+import { CartPage } from "@/features/cart/CartPage";
+import { CatalogPage } from "@/features/catalog/CatalogPage";
+import { RegisteredPage } from "@/features/enrollment/RegisteredPage";
+import { TimetablePage } from "@/features/timetable/TimetablePage";
 
 const router = createBrowserRouter([
   // Public
-  { path: "/login", element: <Placeholder title="Login" /> },
+  { path: "/login", element: <LoginPage /> },
 
   // Everything under ProtectedRoute needs a valid token; otherwise it redirects to /login
   {
     element: <ProtectedRoute />,
     children: [
-      { index: true, element: <Navigate to="/catalog" replace /> },
-      { path: "catalog", element: <Placeholder title="Course Catalog" /> }, // View 1
-      { path: "timetable", element: <Placeholder title="Weekly Timetable" /> }, // View 2
-      { path: "cart", element: <Placeholder title="Registration Cart" /> }, // View 3
-      { path: "registered", element: <Placeholder title="Registered Courses" /> }, // View 4
+      {
+        // Navbar + tab bar around every logged-in page
+        element: <AppLayout />,
+        children: [
+          { index: true, element: <Navigate to="/catalog" replace /> },
+          { path: "catalog", element: <CatalogPage /> }, // View 1
+          { path: "timetable", element: <TimetablePage /> }, // View 2
+          { path: "cart", element: <CartPage /> }, // View 3
+          { path: "registered", element: <RegisteredPage /> }, // View 4
+        ],
+      },
     ],
   },
 
