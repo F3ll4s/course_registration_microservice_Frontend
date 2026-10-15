@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { claimWaitlist, drop, enroll, getMyEnrollments, getMyWaitlist } from "./enrollments";
 import { getStudent } from "./students";
 
-// These run against the MSW mocks in src/mocks, which keep state for the whole file.
-// Each test uses different section ids so the order of the tests doesn't matter.
+// These run against the MSW mocks in src/mocks; the mock data is reset after every test (src/test/setup.ts).
 
 const enrolledIds = async () => (await getMyEnrollments()).map((e) => e.section_id);
 

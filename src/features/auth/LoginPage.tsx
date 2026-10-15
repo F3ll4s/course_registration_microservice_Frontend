@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { login } from "@/api/auth";
+import { ApiError } from "@/api/client";
 import { toUserMessage } from "@/lib/errors";
 import { isTokenExpired, useAuthStore } from "./store";
 
@@ -32,7 +33,12 @@ export function LoginPage() {
       saveToken(res.access_token);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(toUserMessage(err));
+      // On this page a 401 means wrong credentials, not an expired session
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? "Incorrect student ID or password."
+          : toUserMessage(err),
+      );
     } finally {
       setPending(false);
     }
