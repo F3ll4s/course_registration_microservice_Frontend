@@ -3,11 +3,24 @@ import type { WaitlistEntry } from "@/api/types";
 import { sections } from "./catalog";
 
 // In-memory state for the logged-in mock student. It resets when the page reloads.
-const enrolled = new Set<number>([105, 108, 109, 110]); // CS410, CS315, GEN201, MTH205
-const waitlist: WaitlistEntry[] = [
+const INITIAL_ENROLLED = [105, 108, 109, 110]; // CS410, CS315, GEN201, MTH205
+const INITIAL_WAITLIST: WaitlistEntry[] = [
   { offer_id: 1, section_id: 104, position: 3, status: "WAITLISTED", expires_at: null }, // CS305
 ];
+const INITIAL_SEAT_COUNTS = new Map(sections.map((s) => [s.id, s.enrolled_count]));
+
+const enrolled = new Set<number>(INITIAL_ENROLLED);
+const waitlist: WaitlistEntry[] = INITIAL_WAITLIST.map((w) => ({ ...w }));
 let nextOfferId = 2;
+
+// Tests call this between cases so one test's enroll or drop can't leak into the next
+export function resetEnrollmentMock() {
+  enrolled.clear();
+  INITIAL_ENROLLED.forEach((id) => enrolled.add(id));
+  waitlist.splice(0, waitlist.length, ...INITIAL_WAITLIST.map((w) => ({ ...w })));
+  nextOfferId = 2;
+  for (const s of sections) s.enrolled_count = INITIAL_SEAT_COUNTS.get(s.id) ?? s.enrolled_count;
+}
 
 export const enrollmentHandlers = [
   http.post("*/api/v1/enrollments", async ({ request }) => {
