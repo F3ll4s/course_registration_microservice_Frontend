@@ -8,32 +8,32 @@ import { useAuthStore } from "./store";
 
 const routes = [
   { path: "/login", element: <LoginPage /> },
-  { path: "/catalog", element: <h1>Catalog page</h1> },
-  { path: "/cart", element: <h1>Cart page</h1> },
+  { path: "/registration", element: <h1>Registration page</h1> },
+  { path: "/registered", element: <h1>Registered page</h1> },
 ];
 
 describe("LoginPage", () => {
-  it("logs in and goes to the catalog", async () => {
+  it("logs in and goes to the registration page", async () => {
     const { user } = renderRoutes(routes, "/login");
 
     await user.type(screen.getByLabelText("Student ID"), "65010042");
     await user.type(screen.getByLabelText("Password"), "secret");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByRole("heading", { name: "Catalog page" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Registration page" })).toBeInTheDocument();
     expect(useAuthStore.getState().studentId).toBe("65010042");
   });
 
   it("returns to the page the student was trying to open", async () => {
     const { user, router } = renderRoutes(routes, "/login");
     // ProtectedRoute redirects with the original location in `state.from`
-    await router.navigate("/login", { state: { from: { pathname: "/cart" } } });
+    await router.navigate("/login", { state: { from: { pathname: "/registered" } } });
 
     await user.type(screen.getByLabelText("Student ID"), "65010042");
     await user.type(screen.getByLabelText("Password"), "secret");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByRole("heading", { name: "Cart page" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Registered page" })).toBeInTheDocument();
   });
 
   it("says the credentials are wrong when the backend answers 401", async () => {

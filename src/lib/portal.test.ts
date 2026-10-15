@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Section } from "@/api/types";
 import { isFull } from "@/features/catalog/seats";
-import { formatDays, formatSchedule } from "./portal";
+import { formatDays, formatSchedule, sectionName } from "./portal";
 
 const section = (overrides: Partial<Section> = {}): Section => ({
   id: 1,
@@ -26,7 +26,7 @@ describe("formatDays", () => {
 
 describe("formatSchedule", () => {
   it("joins days and the time range", () => {
-    expect(formatSchedule(section())).toBe("Mon, Wed 09:00 - 10:30");
+    expect(formatSchedule(section())).toBe("Mon, Wed 09:00-10:30");
   });
 });
 
@@ -38,5 +38,12 @@ describe("isFull", () => {
   it("is true at capacity and above", () => {
     expect(isFull(section({ enrolled_count: 50 }))).toBe(true);
     expect(isFull(section({ enrolled_count: 51 }))).toBe(true);
+  });
+});
+
+describe("sectionName", () => {
+  it("pads the section number to two digits", () => {
+    expect(sectionName(section())).toBe("CS301 Sec 01");
+    expect(sectionName(section({ section_number: 12 }))).toBe("CS301 Sec 12");
   });
 });

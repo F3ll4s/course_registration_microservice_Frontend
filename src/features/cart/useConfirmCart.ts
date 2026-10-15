@@ -1,23 +1,29 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { type EnrollResult, enroll } from "@/api/enrollments";
+import type { SectionRow } from "@/api/types";
+import { notify } from "@/components/notify";
 import { toUserMessage } from "@/lib/errors";
+import { secNo } from "@/lib/portal";
 import { useCartStore } from "./store";
 
-type Outcome = { sectionId: number; result?: EnrollResult; error?: unknown };
+export type Outcome = { row: SectionRow; result?: EnrollResult; error?: unknown };
 
+const sectionName = (r: SectionRow) => `${r.course.code} Sec ${secNo(r.section.section_number)}`;
+
+// Enrolls each staged section in turn. A section that filled up meanwhile comes back WAITLISTED:
+// the backend has already queued the student, and the cart page offers what to do next.
 export function useConfirmCart() {
   const qc = useQueryClient();
   const remove = useCartStore((s) => s.remove);
 
   return useMutation({
-    mutationFn: async (sectionIds: number[]): Promise<Outcome[]> => {
+    mutationFn: async (rows: SectionRow[]): Promise<Outcome[]> => {
       const outcomes: Outcome[] = [];
-      for (const sectionId of sectionIds) {
+      for (const row of rows) {
         try {
-          outcomes.push({ sectionId, result: await enroll(sectionId) });
+          outcomes.push({ row, result: await enroll(row.section.id) });
         } catch (error) {
-          outcomes.push({ sectionId, error });
+          outcomes.push({ row, error });
         }
       }
       return outcomes;
@@ -25,17 +31,25 @@ export function useConfirmCart() {
     onSuccess: (outcomes) => {
       const status = (o: Outcome) => o.result?.status;
       for (const o of outcomes) {
-        if (status(o) === "ENROLLED" || status(o) === "WAITLISTED") remove(o.sectionId);
+        if (status(o) === "ENROLLED" || status(o) === "WAITLISTED") remove(o.row.section.id);
       }
       qc.invalidateQueries({ queryKey: ["sections"] });
       qc.invalidateQueries({ queryKey: ["enrollments", "me"] });
 
-      const enrolled = outcomes.filter((o) => status(o) === "ENROLLED").length;
-      const waitlisted = outcomes.filter((o) => status(o) === "WAITLISTED").length;
-      toast.success(`${enrolled} enrolled, ${waitlisted} waitlisted`);
+      const enrolled = outcomes.filter((o) => status(o) === "ENROLLED").map((o) => o.row);
+      if (enrolled.length) {
+        const credits = enrolled.reduce((sum, r) => sum + r.course.credits, 0);
+        notify.success(
+          "Enrollment successful",
+          `Successfully registered for ${enrolled.map(sectionName).join(", ")} (${credits} Credits).`,
+        );
+      }
 
       for (const o of outcomes.filter((x) => x.error || status(x) === "REJECTED")) {
-        toast.error(o.error ? toUserMessage(o.error) : (o.result?.detail ?? "Enrollment rejected."));
+        notify.error(
+          `${sectionName(o.row)} not enrolled`,
+          o.error ? toUserMessage(o.error) : (o.result?.detail ?? "Enrollment rejected."),
+        );
       }
     },
   });

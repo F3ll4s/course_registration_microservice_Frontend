@@ -6,7 +6,7 @@ import { toUserMessage } from "@/lib/errors";
 import { isTokenExpired, useAuthStore } from "./store";
 
 const INPUT =
-  "h-[42px] rounded-md border border-[#cbd5e1] bg-[#f8fafc] px-[13px] text-sm text-[#1e293b] outline-none focus-visible:border-[#ff6b00] focus-visible:ring-2 focus-visible:ring-[#ff6b00]/30";
+  "h-[42px] rounded-md border border-[#cbd5e1] bg-[#f8fafc] px-[13px] text-sm text-[#1e293b] outline-none focus-visible:border-[#ff5722] focus-visible:ring-2 focus-visible:ring-[#ff5722]/30";
 
 // Not designed in Penpot yet; uses the same colors as the portal screens
 export function LoginPage() {
@@ -15,7 +15,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   // ProtectedRoute stores where the user was going; send them back there after login
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/catalog";
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/registration";
 
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
@@ -51,7 +51,7 @@ export function LoginPage() {
         className="flex w-full max-w-sm flex-col gap-4 rounded-[10px] border border-[#e2e8f0] bg-white p-6"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-[58px] shrink-0 items-center justify-center rounded-lg bg-[#ff6b00] text-[13px] font-extrabold text-white">
+          <span className="flex h-9 w-[58px] shrink-0 items-center justify-center rounded-lg bg-[#ff5722] text-[13px] font-extrabold text-white">
             KMITL
           </span>
           <h1 className="text-[15px] leading-tight font-bold text-[#0f172a]">
@@ -87,7 +87,7 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="h-[42px] rounded-md bg-[#ff6b00] text-xs font-bold text-white outline-none hover:bg-[#ea580c] focus-visible:ring-2 focus-visible:ring-[#ff6b00]/40 focus-visible:ring-offset-1 disabled:opacity-60"
+          className="h-[42px] rounded-md bg-[#ff5722] text-xs font-bold text-white outline-none hover:bg-[#e64a19] focus-visible:ring-2 focus-visible:ring-[#ff5722]/40 focus-visible:ring-offset-1 disabled:opacity-60"
         >
           {pending ? "Logging in..." : "Log in"}
         </button>

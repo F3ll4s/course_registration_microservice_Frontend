@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getCourses, getSections } from "@/api/catalog";
 import type { Day, SectionRow } from "@/api/types";
@@ -6,13 +6,16 @@ import type { Day, SectionRow } from "@/api/types";
 export type CatalogFilters = { search: string; department: string; day?: Day; openOnly: boolean };
 
 export function useCatalog(f: CatalogFilters) {
+  // While a new search or filter loads, the previous results stay on screen instead of a loading notice
   const courses = useQuery({
     queryKey: ["courses", f.search, f.department],
     queryFn: () => getCourses({ search: f.search, department: f.department }),
+    placeholderData: keepPreviousData,
   });
   const sections = useQuery({
     queryKey: ["sections", f.day, f.openOnly],
     queryFn: () => getSections({ day: f.day, open_only: f.openOnly }),
+    placeholderData: keepPreviousData,
     refetchInterval: 10_000, // live seat counts
   });
 

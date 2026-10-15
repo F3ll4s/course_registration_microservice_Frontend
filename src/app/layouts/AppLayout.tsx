@@ -1,83 +1,135 @@
-import { LogOut } from "lucide-react";
-import { NavLink, Outlet } from "react-router";
+import { Menu } from "@base-ui/react/menu";
+import { BookOpenCheck, CalendarRange, LogOut, Settings, UserRound } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router";
+import { Dot } from "@/components/portal";
 import { useAuthStore } from "@/features/auth/store";
+import { MAX_CREDITS } from "@/features/cart/rules";
+import { useEnrolledRows } from "@/features/enrollment/useMyEnrollments";
+import { useOfferAlerts } from "@/features/enrollment/useOfferAlerts";
 import { cn } from "@/lib/utils";
 
-// Tab widths are the ones drawn on the Penpot boards
-const TABS = [
-  { to: "/catalog", label: "1. Search Catalog", width: "w-[170px]" },
-  { to: "/timetable", label: "2. Weekly Timetable", width: "w-[185px]" },
-  { to: "/cart", label: "3. My Cart / Validation", width: "w-[205px]" },
-  { to: "/registered", label: "4. Registered Courses & Waitlist", width: "w-[260px]" },
+const PAGES = [
+  { to: "/registration", label: "Course Registration", Icon: CalendarRange },
+  { to: "/registered", label: "Registered Courses & Waitlist", Icon: BookOpenCheck },
 ];
 
-// Page shell for every logged-in view: navbar, tab bar, then the page in <Outlet/>.
-// Sizes and colors follow the Penpot "Initial Draft" boards (1280px canvas, 24px gutters).
+const MENU_ITEM =
+  "flex h-9 cursor-default items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium text-[#334155] outline-none select-none data-highlighted:bg-[#f1f5f9] data-highlighted:text-[#0f172a] [&_svg]:size-4 [&_svg]:text-[#64748b]";
+
+// Page shell for every logged-in view: the Penpot "Design #1" Persistent Global Header, then the page.
+// Design #1 has no tab bar; the Profile menu switches between the two pages and logs out.
 export function AppLayout() {
-  const studentId = useAuthStore((s) => s.studentId);
-  const logout = useAuthStore((s) => s.logout);
+  useOfferAlerts();
 
   return (
     <div className="min-h-svh bg-[#f8fafc]">
       <header className="border-b border-[#e2e8f0] bg-white">
-        <div className="mx-auto flex h-[55px] max-w-[1280px] items-center justify-between gap-4 px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-9 w-[58px] shrink-0 items-center justify-center rounded-lg bg-[#ff6b00] text-[13px] font-extrabold text-white">
+        <div className="mx-auto flex min-h-[72px] max-w-[1440px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="flex h-8 w-[42px] shrink-0 items-center justify-center rounded-lg bg-[#ff5722] text-xs font-extrabold text-white">
               KMITL
             </span>
-            <span className="truncate text-[15px] font-bold text-[#0f172a]">
-              STUDENT COURSE REGISTRATION PORTAL
+            <span className="truncate text-[15px] font-bold text-[#0f172a]">STUDENT COURSE REGISTRATION PORTAL</span>
+            <span className="hidden h-7 shrink-0 items-center rounded-full border border-[#cbd5e1] bg-[#f1f5f9] px-2 text-xs font-semibold text-[#475569] lg:flex">
+              Term: 2026/1
+            </span>
+            {/* The backend has no registration-window endpoint yet, so the window is shown as open */}
+            <span className="hidden h-7 shrink-0 items-center gap-1.5 rounded-full border border-[#a7f3d0] bg-[#ecfdf5] px-2.5 text-xs font-semibold text-[#065f46] lg:flex">
+              <Dot tone="green" />
+              Window Open
             </span>
           </div>
 
-          <div className="flex shrink-0 items-center gap-4">
-            <span className="hidden h-7 items-center rounded-full border border-[#ffd2b2] bg-[#fff4ed] px-3 text-xs font-semibold text-[#ea580c] sm:flex">
-              Academic Year: 2026/1
-            </span>
-            <div className="flex h-9 items-center gap-2 rounded-full border border-[#e2e8f0] bg-[#f8fafc] pr-1.5 pl-[5px] md:w-[260px]">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#ff6b00] text-[11px] font-bold text-white">
-                {studentId?.slice(0, 2)}
-              </span>
-              <span className="flex-1 truncate text-xs font-semibold text-[#1e293b]">{studentId}</span>
-              <button
-                type="button"
-                onClick={logout}
-                aria-label="Log out"
-                title="Log out"
-                className="flex size-6 shrink-0 items-center justify-center rounded-full text-[#64748b] hover:bg-[#e2e8f0] hover:text-[#0f172a] focus-visible:outline-2 focus-visible:outline-[#ff6b00]"
-              >
-                <LogOut className="size-3.5" />
-              </button>
-            </div>
+          <div className="flex items-center gap-5">
+            <CreditMeter />
+            <StudentPill />
+            <ProfileMenu />
           </div>
         </div>
       </header>
 
-      <nav className="border-b border-[#e2e8f0] bg-white">
-        <div className="mx-auto flex h-[45px] max-w-[1280px] items-start gap-3 overflow-x-auto px-6 pt-1.5 lg:overflow-visible">
-          {TABS.map(({ to, label, width }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                cn(
-                  "relative flex h-[34px] shrink-0 items-center rounded-md pl-3.5 text-[13px] whitespace-nowrap",
-                  width,
-                  isActive
-                    ? "bg-[#fff4ed] font-bold text-[#ea580c] after:absolute after:inset-x-2 after:top-[calc(100%+3px)] after:h-[3px] after:rounded-sm after:bg-[#ff6b00]"
-                    : "font-medium text-[#64748b] hover:text-[#0f172a]",
-                )
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-[1280px] px-6 pt-3.5 pb-10">
+      <main className="mx-auto max-w-[1440px] px-4 pt-6 pb-10 sm:px-6">
         <Outlet />
       </main>
     </div>
+  );
+}
+
+// "Credits: 12 / 22 Cr" with a bar, counting enrolled sections only
+function CreditMeter() {
+  const { rows } = useEnrolledRows();
+  const credits = rows.reduce((sum, r) => sum + r.course.credits, 0);
+
+  return (
+    <div className="hidden items-center gap-2.5 md:flex">
+      <span className="text-[13px] font-semibold text-[#0f172a]">
+        Credits: {credits} / {MAX_CREDITS} Cr
+      </span>
+      <span
+        role="meter"
+        aria-label="Enrolled credits"
+        aria-valuenow={credits}
+        aria-valuemin={0}
+        aria-valuemax={MAX_CREDITS}
+        className="h-2 w-[110px] overflow-hidden rounded-full border border-[#e2e8f0] bg-[#f1f5f9]"
+      >
+        <span
+          className="block h-full rounded-full bg-[#ff5722]"
+          style={{ width: `${Math.min(100, (credits / MAX_CREDITS) * 100)}%` }}
+        />
+      </span>
+    </div>
+  );
+}
+
+function StudentPill() {
+  const studentId = useAuthStore((s) => s.studentId);
+  return (
+    <div className="hidden h-9 items-center gap-2 rounded-full border border-[#e2e8f0] bg-[#f1f5f9] pr-3.5 pl-1.5 sm:flex">
+      <span className="flex size-6 items-center justify-center rounded-full border border-[#ffccbc] bg-[#fff3e0] text-[#ff5722]">
+        <UserRound className="size-3.5" strokeWidth={2.5} />
+      </span>
+      <span className="text-[13px] font-semibold text-[#0f172a]">{studentId}</span>
+    </div>
+  );
+}
+
+function ProfileMenu() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const logout = useAuthStore((s) => s.logout);
+
+  return (
+    <Menu.Root>
+      <Menu.Trigger className="flex h-9 items-center gap-1.5 rounded-md border border-[#cbd5e1] bg-white px-3.5 text-[13px] font-semibold text-[#475569] outline-none hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-[#ff5722]/40 data-popup-open:bg-[#f1f5f9]">
+        Profile
+        <Settings className="size-3.5" />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner side="bottom" align="end" sideOffset={6} className="z-50">
+          <Menu.Popup className="w-64 rounded-lg border border-[#e2e8f0] bg-white p-1.5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] outline-none">
+            {PAGES.map(({ to, label, Icon }) => (
+              <Menu.Item
+                key={to}
+                onClick={() => navigate(to)}
+                aria-current={pathname === to ? "page" : undefined}
+                className={cn(
+                  MENU_ITEM,
+                  pathname === to && "font-bold text-[#d84315] data-highlighted:text-[#d84315] [&_svg]:text-[#ff5722]",
+                )}
+              >
+                <Icon />
+                {label}
+              </Menu.Item>
+            ))}
+            <Menu.Separator className="my-1.5 h-px bg-[#e2e8f0]" />
+            <Menu.Item onClick={logout} className={MENU_ITEM}>
+              <LogOut />
+              Log out
+            </Menu.Item>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }

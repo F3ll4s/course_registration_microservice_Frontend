@@ -13,7 +13,11 @@ export function parseServerTime(value: string): Date {
   return new Date(hasZone ? value : `${value.replace(" ", "T")}Z`);
 }
 
-const secondsLeft = (expiresAt: string) =>
+// 85500 -> "23h 45m"
+export const formatHoursMinutes = (seconds: number): string =>
+  `${Math.floor(seconds / 3600)}h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, "0")}m`;
+
+export const secondsLeft = (expiresAt: string) =>
   Math.max(0, Math.floor((parseServerTime(expiresAt).getTime() - Date.now()) / 1000));
 
 export function useCountdown(expiresAt: string): number {

@@ -1,12 +1,20 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parseServerTime, toMin, useCountdown } from "./time";
+import { formatHoursMinutes, parseServerTime, toMin, useCountdown } from "./time";
 
 describe("toMin", () => {
   it("converts HH:MM to minutes since midnight", () => {
     expect(toMin("00:00")).toBe(0);
     expect(toMin("09:30")).toBe(570);
     expect(toMin("18:00")).toBe(1080);
+  });
+});
+
+describe("formatHoursMinutes", () => {
+  it("shows hours and zero-padded minutes, dropping seconds", () => {
+    expect(formatHoursMinutes(23 * 3600 + 45 * 60 + 59)).toBe("23h 45m");
+    expect(formatHoursMinutes(5 * 60)).toBe("0h 05m");
+    expect(formatHoursMinutes(0)).toBe("0h 00m");
   });
 });
 
