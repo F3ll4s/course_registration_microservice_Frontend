@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { server } from "@/mocks/server";
@@ -50,5 +50,59 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Incorrect student ID or password.")).toBeInTheDocument();
     expect(useAuthStore.getState().token).toBeNull();
+  });
+
+  describe("validation", () => {
+    // Counts login requests, so the tests can prove invalid input never reaches the backend
+    function countLoginRequests() {
+      const calls = { count: 0 };
+      server.use(
+        http.post("*/api/v1/auth/login", () => {
+          calls.count++;
+          return HttpResponse.json({ detail: "Invalid credentials" }, { status: 401 });
+        }),
+      );
+      return calls;
+    }
+
+    it("asks for both fields without calling the backend", async () => {
+      const calls = countLoginRequests();
+      const { user } = renderRoutes(routes, "/login");
+
+      await user.click(screen.getByRole("button", { name: "Log in" }));
+
+      expect(await screen.findByText("Enter your student ID.")).toBeInTheDocument();
+      expect(screen.getByText("Enter your password.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Student ID")).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByLabelText("Student ID")).toHaveAccessibleDescription("Enter your student ID.");
+      expect(calls.count).toBe(0);
+    });
+
+    it("rejects a student ID that is not 8 digits", async () => {
+      const calls = countLoginRequests();
+      const { user } = renderRoutes(routes, "/login");
+
+      await user.type(screen.getByLabelText("Student ID"), "6501");
+      await user.type(screen.getByLabelText("Password"), "secret");
+      await user.click(screen.getByRole("button", { name: "Log in" }));
+
+      expect(await screen.findByText("Student ID must be 8 digits.")).toBeInTheDocument();
+      expect(screen.queryByText("Enter your password.")).not.toBeInTheDocument();
+      expect(calls.count).toBe(0);
+    });
+
+    it("clears the message once the field is fixed", async () => {
+      const { user } = renderRoutes(routes, "/login");
+      const studentId = screen.getByLabelText("Student ID");
+
+      await user.type(studentId, "6501");
+      await user.type(screen.getByLabelText("Password"), "secret");
+      await user.click(screen.getByRole("button", { name: "Log in" }));
+      expect(await screen.findByText("Student ID must be 8 digits.")).toBeInTheDocument();
+
+      await user.type(studentId, "0042");
+      await waitFor(() => expect(screen.queryByText("Student ID must be 8 digits.")).not.toBeInTheDocument());
+      expect(studentId).not.toHaveAttribute("aria-invalid");
+    });
   });
 });

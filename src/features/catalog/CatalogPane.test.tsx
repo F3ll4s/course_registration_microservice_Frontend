@@ -85,19 +85,23 @@ describe("CatalogPane", () => {
     expect(await screen.findByText("Section is full. You were added to the waitlist.")).toBeInTheDocument();
   });
 
-  it("searches as you type and resets from the empty state", async () => {
+  it("searches as you type", async () => {
+    const { user } = renderPage(<CatalogPane />);
+    await findSection("CS301 Sec 01");
+
+    await user.type(screen.getByLabelText("Search course code or title"), "CS420");
+    await waitFor(() => expect(querySection("CS301 Sec 01")).toBeNull());
+    expect(await findSection("CS420 Sec 01")).toBeInTheDocument();
+  });
+
+  it("resets all filters from the empty state", async () => {
     const { user } = renderPage(<CatalogPane />);
     await findSection("CS301 Sec 01");
     const search = screen.getByLabelText("Search course code or title");
 
-    await user.type(search, "CS420");
-    await waitFor(() => expect(querySection("CS301 Sec 01")).toBeNull());
-    expect(await findSection("CS420 Sec 01")).toBeInTheDocument();
-
-    await user.clear(search);
-    await user.type(search, "Quantum Computing");
+    await user.type(search, "Quantum");
     expect(await screen.findByText("No Courses Found")).toBeInTheDocument();
-    expect(screen.getByText(/No sections matched "Quantum Computing"/)).toBeInTheDocument();
+    expect(screen.getByText(/No sections matched "Quantum"/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Reset All Filters" }));
     await findSection("CS301 Sec 01");
