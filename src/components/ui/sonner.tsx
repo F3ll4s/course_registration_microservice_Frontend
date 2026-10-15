@@ -32,6 +32,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // Portal toasts (components/notify.tsx) are 400px wide, as in the Penpot toast matrix
+          "--width": "400px",
         } as React.CSSProperties
       }
       toastOptions={{

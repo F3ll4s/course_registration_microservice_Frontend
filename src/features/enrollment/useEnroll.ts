@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { enroll } from "@/api/enrollments";
+import { notify } from "@/components/notify";
 import { toUserMessage } from "@/lib/errors";
 
 export function useEnroll() {
@@ -12,12 +12,12 @@ export function useEnroll() {
       qc.invalidateQueries({ queryKey: ["sections"] });
       qc.invalidateQueries({ queryKey: ["enrollments", "me"] });
 
-      if (result.status === "ENROLLED") toast.success("You are enrolled!");
+      if (result.status === "ENROLLED") notify.success("Enrollment successful", "You are enrolled!");
       else if (result.status === "WAITLISTED")
-        toast.info("Section is full. You were added to the waitlist.");
-      else toast.error(result.detail ?? "Enrollment was rejected.");
+        notify.waitlist("Added to waitlist", "Section is full. You were added to the waitlist.");
+      else notify.error("Enrollment rejected", result.detail ?? "Enrollment was rejected.");
     },
-    onError: (err) => toast.error(toUserMessage(err)),
+    onError: (err) => notify.error("Enrollment failed", toUserMessage(err)),
   });
 }
 
