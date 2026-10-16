@@ -17,8 +17,8 @@ const DAYS: { value: Day; label: string }[] = [
   { value: "FRI", label: "Fri" },
 ];
 
-// 8, 9 ... 17: one row per hour
-const HOURS = Array.from({ length: (GRID_END - GRID_START) / 60 }, (_, i) => GRID_START / 60 + i);
+// 8, 9 ... 18: one line per hour, including the end of the day
+const HOURS = Array.from({ length: (GRID_END - GRID_START) / 60 + 1 }, (_, i) => GRID_START / 60 + i);
 
 const COLUMNS = "grid grid-cols-[56px_repeat(5,minmax(0,1fr))] gap-x-1";
 
@@ -73,13 +73,14 @@ export function TimetableCard() {
               ))}
             </div>
 
-            <div className={cn(COLUMNS, "mt-2.5")} style={{ height: GRID_HEIGHT }}>
+            <div className={cn(COLUMNS, "mt-3 mb-1.5")} style={{ height: GRID_HEIGHT }}>
               <div className="relative">
+                {/* Each label is centred on its hour line, so 09:00 sits exactly where a 09:00 class starts */}
                 {HOURS.map((hour, i) => (
                   <span
                     key={hour}
                     className="absolute left-0 text-[10px] leading-3 font-semibold text-[#64748b]"
-                    style={{ top: i * HOUR_PX + 4 }}
+                    style={{ top: i * HOUR_PX - 6 }}
                   >
                     {String(hour).padStart(2, "0")}:00
                   </span>
@@ -87,14 +88,22 @@ export function TimetableCard() {
               </div>
 
               {DAYS.map((day) => (
-                <div key={day.value} className="relative">
-                  {/* One faint cell per hour, as the empty slots on the board */}
-                  {HOURS.map((hour, i) => (
+                <div key={day.value} className="relative rounded border border-[#e2e8f0] bg-[#f8fafc]/70">
+                  {/* Solid hour lines and dashed half-hour lines; classes on :30 line up with the dashed ones */}
+                  {HOURS.slice(1, -1).map((hour, i) => (
                     <div
                       key={hour}
                       aria-hidden
-                      className="absolute inset-x-0 rounded border border-[#e2e8f0] bg-[#f8fafc]/70"
-                      style={{ top: i * HOUR_PX + 2, height: HOUR_PX - 4 }}
+                      className="absolute inset-x-0 border-t border-[#e2e8f0]"
+                      style={{ top: (i + 1) * HOUR_PX - 1 }}
+                    />
+                  ))}
+                  {HOURS.slice(0, -1).map((hour, i) => (
+                    <div
+                      key={`${hour}:30`}
+                      aria-hidden
+                      className="absolute inset-x-0 border-t border-dashed border-[#eef2f6]"
+                      style={{ top: i * HOUR_PX + HOUR_PX / 2 - 1 }}
                     />
                   ))}
                   {blocks

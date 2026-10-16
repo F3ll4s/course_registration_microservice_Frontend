@@ -35,9 +35,10 @@ export function TimetableBlock({ row, tone, against }: { row: SectionRow; tone: 
   const { section } = row;
   const start = Math.max(GRID_START, toMin(section.start_time));
   const end = Math.min(GRID_END, toMin(section.end_time));
-  // 2px gap above and below, so back-to-back classes stay visually separate
-  const top = ((start - GRID_START) / 60) * HOUR_PX + 2;
-  const height = ((end - start) / 60) * HOUR_PX - 4;
+  // The day column has a 1px border, so `top` 0 is already 1px below the hour line.
+  // Ending 2px short keeps back-to-back classes visually separate.
+  const top = ((start - GRID_START) / 60) * HOUR_PX;
+  const height = ((end - start) / 60) * HOUR_PX - 2;
   const t = TONES[tone];
   const time = `${section.start_time} - ${section.end_time}`;
 
