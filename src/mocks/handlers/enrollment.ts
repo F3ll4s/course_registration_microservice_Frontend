@@ -3,7 +3,8 @@ import { http, HttpResponse } from "msw";
 import type { WaitlistEntry } from "@/api/types";
 import { sections } from "./catalog";
 
-// In-memory state per mock student, keyed by the JWT's student id. It resets when the page reloads.
+// In-memory state per mock student, keyed by the JWT's student id. In the browser it is saved to
+// sessionStorage (see saveEnrollmentMock), so it survives a reload and resets when the tab is closed.
 // The demo student starts with the Penpot data; any other student id starts with nothing.
 // Seat counts live on `sections`, so they are shared: one student's drop frees a seat for everyone.
 export const DEMO_STUDENT = "65010042";
@@ -46,6 +47,42 @@ export function resetEnrollmentMock() {
   students.clear();
   nextOfferId = 2;
   for (const s of sections) s.enrolled_count = INITIAL_SEAT_COUNTS.get(s.id) ?? s.enrolled_count;
+}
+
+const STORAGE_KEY = "mock-backend";
+
+type SavedState = {
+  students: Record<string, { enrolled: number[]; waitlist: WaitlistEntry[] }>;
+  seats: Record<number, number>;
+  nextOfferId: number;
+};
+
+// Browser only (src/mocks/browser.ts): called after every mocked POST
+export function saveEnrollmentMock() {
+  const saved: SavedState = {
+    students: Object.fromEntries(
+      [...students].map(([id, s]) => [id, { enrolled: [...s.enrolled], waitlist: s.waitlist }]),
+    ),
+    seats: Object.fromEntries(sections.map((s) => [s.id, s.enrolled_count])),
+    nextOfferId,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+export function loadEnrollmentMock() {
+  const raw = sessionStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw) as SavedState;
+    students.clear();
+    for (const [id, s] of Object.entries(saved.students)) {
+      students.set(id, { enrolled: new Set(s.enrolled), waitlist: s.waitlist });
+    }
+    for (const s of sections) s.enrolled_count = saved.seats[s.id] ?? s.enrolled_count;
+    nextOfferId = saved.nextOfferId;
+  } catch {
+    sessionStorage.removeItem(STORAGE_KEY); // unreadable: start from the demo data
+  }
 }
 
 // Simulates another student dropping: the student's place in that queue becomes a seat offer
