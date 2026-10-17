@@ -4,11 +4,7 @@ import { catalogHandlers } from "./handlers/catalog";
 import { enrollmentHandlers, loadEnrollmentMock, saveEnrollmentMock } from "./handlers/enrollment";
 import { studentHandlers } from "./handlers/student";
 
-const gatewayHandlers = [...authHandlers, ...enrollmentHandlers, ...studentHandlers];
-
-// hybrid: only the gateway is mocked, /catalog/* goes through to the real service on :8002
-// mock:   catalog is mocked too
-const handlers = [...gatewayHandlers, ...(import.meta.env.MODE === "mock" ? catalogHandlers : [])];
+const handlers = [...authHandlers, ...catalogHandlers, ...enrollmentHandlers, ...studentHandlers];
 
 // Answers matching requests inside the page by wrapping window.fetch.
 // We used MSW's service worker before, but the browser stops idle workers (e.g. in a background tab)
@@ -21,7 +17,7 @@ export function startMocking() {
   window.fetch = async (input, init) => {
     const request = new Request(input, init);
     const response = await getResponse(handlers, request.clone());
-    if (!response) return realFetch(request); // not mocked: hybrid catalog calls, Vite assets
+    if (!response) return realFetch(request); // not an API call, e.g. a Vite asset
     if (request.method !== "GET") saveEnrollmentMock();
     return response;
   };

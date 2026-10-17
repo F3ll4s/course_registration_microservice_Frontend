@@ -1,11 +1,16 @@
 import { ApiError, api } from "./client";
 import type { Enrollment, WaitlistEntry } from "./types";
 
+// 201 ENROLLED, 409 WAITLISTED (section full) or 400 REJECTED (a validation rule failed).
+// All three carry this body; a duplicate request is a 409 with only `detail` and stays an error.
 export type EnrollResult = {
   status: "ENROLLED" | "WAITLISTED" | "REJECTED";
-  message?: string;
-  detail?: string;
+  message: string;
+  waitlist_position?: number | null;
+  rule_name?: string | null;
 };
+
+const RESULT_STATUS: Record<number, EnrollResult["status"]> = { 409: "WAITLISTED", 400: "REJECTED" };
 
 export async function enroll(sectionId: number): Promise<EnrollResult> {
   try {
@@ -15,18 +20,15 @@ export async function enroll(sectionId: number): Promise<EnrollResult> {
       body: JSON.stringify({ section_id: sectionId }),
     });
   } catch (err) {
-    if (
-      err instanceof ApiError &&
-      err.status === 409 &&
-      (err.body as EnrollResult | null)?.status === "WAITLISTED"
-    ) {
+    if (err instanceof ApiError && (err.body as EnrollResult | null)?.status === RESULT_STATUS[err.status]) {
       return err.body as EnrollResult;
     }
     throw err;
   }
 }
 
-export type DropResult = { status?: string; message?: string }; // shape not documented yet
+// Also leaves a waitlist or declines a seat offer. 404 when there is nothing to drop.
+export type DropResult = { status: "DROPPED"; message: string };
 
 export const drop = (sectionId: number) =>
   api<DropResult>("/drops", { method: "POST", body: JSON.stringify({ section_id: sectionId }) });
@@ -42,7 +44,6 @@ export const claimWaitlist = (offerId: number) =>
     body: JSON.stringify({ offer_id: offerId }),
   });
 
-// Assumed paths (README section 5, requests 2 and 3): not confirmed by the backend team yet
 export const getMyEnrollments = () => api<Enrollment[]>("/enrollments/me");
 
 export const getMyWaitlist = () => api<WaitlistEntry[]>("/waitlist/me");

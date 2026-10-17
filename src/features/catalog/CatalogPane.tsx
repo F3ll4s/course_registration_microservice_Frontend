@@ -3,10 +3,9 @@ import { type ReactNode, useMemo, useState } from "react";
 import type { Day, PrereqResult, SectionRow } from "@/api/types";
 import { notify } from "@/components/notify";
 import { CodeChip, Dot, Notice, Pill } from "@/components/portal";
-import { sectionsOverlap } from "@/features/cart/rules";
+import { checkPrereqs, sectionsOverlap } from "@/features/cart/rules";
 import { useCartStore } from "@/features/cart/store";
 import { useCartRows } from "@/features/cart/useCartRows";
-import { usePrereqChecks } from "@/features/cart/usePrereqChecks";
 import { useEnroll } from "@/features/enrollment/useEnroll";
 import { useEnrolledRows } from "@/features/enrollment/useMyEnrollments";
 import { useWaitlistRows } from "@/features/enrollment/useMyWaitlist";
@@ -67,7 +66,7 @@ export function CatalogPane() {
   }, [rows]);
 
   const completed = useCompletedCourses();
-  const prereqs = usePrereqChecks(
+  const prereqs = checkPrereqs(
     courses.map((c) => c.row),
     completed.data,
   );

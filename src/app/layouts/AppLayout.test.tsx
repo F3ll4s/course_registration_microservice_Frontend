@@ -30,11 +30,11 @@ describe("ProtectedRoute and AppLayout", () => {
   });
 
   it("shows the page under the header for a logged-in student", async () => {
-    logIn("65010042");
+    logIn("STU_001");
     renderRoutes(routes, "/registration");
 
     expect(await screen.findByRole("heading", { name: "Registration page" })).toBeInTheDocument();
-    expect(screen.getByText("65010042")).toBeInTheDocument();
+    expect(screen.getByText("STU_001")).toBeInTheDocument();
     // Enrolled credits of the mock student
     expect(await screen.findByText("Credits: 12 / 22 Cr")).toBeInTheDocument();
     expect(screen.getByRole("meter", { name: "Enrolled credits" })).toHaveAttribute("aria-valuenow", "12");

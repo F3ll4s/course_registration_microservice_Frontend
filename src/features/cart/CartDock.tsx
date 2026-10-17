@@ -8,12 +8,11 @@ import { useCompletedCourses } from "@/features/student/useCompletedCourses";
 import { toUserMessage } from "@/lib/errors";
 import { BUTTON, BUTTON_PRIMARY, CARD, formatSchedule, secNo, sectionName } from "@/lib/portal";
 import { cn } from "@/lib/utils";
-import { MAX_CREDITS, sectionsOverlap } from "./rules";
+import { MAX_CREDITS, checkPrereqs, sectionsOverlap } from "./rules";
 import { SeatDepletedDialog } from "./SeatDepletedDialog";
 import { useCartStore } from "./store";
 import { useCartRows } from "./useCartRows";
 import { useConfirmCart } from "./useConfirmCart";
-import { usePrereqChecks } from "./usePrereqChecks";
 
 const credits = (rows: SectionRow[]) => rows.reduce((sum, r) => sum + r.course.credits, 0);
 
@@ -28,7 +27,7 @@ export function CartDock() {
   const cart = useCartRows();
   const { rows: enrolled } = useEnrolledRows();
   const completed = useCompletedCourses();
-  const prereqs = usePrereqChecks(cart, completed.data);
+  const prereqs = checkPrereqs(cart, completed.data);
   const clear = useCartStore((s) => s.clear);
   const confirm = useConfirmCart();
   // Sections that filled up while confirming; the dialog walks through them one at a time

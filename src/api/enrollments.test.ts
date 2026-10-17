@@ -1,6 +1,10 @@
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
+import { server } from "@/mocks/server";
+import { logIn } from "@/test/render";
+import { ApiError } from "./client";
 import { claimWaitlist, drop, enroll, getMyEnrollments, getMyWaitlist } from "./enrollments";
-import { getStudent } from "./students";
+import { getMyProfile } from "./students";
 
 // These run against the MSW mocks in src/mocks; the mock data is reset after every test (src/test/setup.ts).
 
@@ -13,6 +17,23 @@ describe("enroll", () => {
 
   it("converts 409 WAITLISTED into a normal result", async () => {
     expect((await enroll(102)).status).toBe("WAITLISTED");
+  });
+
+  it("converts 400 REJECTED into a normal result with the backend's message", async () => {
+    server.use(
+      http.post("*/api/v1/enrollments", () =>
+        HttpResponse.json(
+          { status: "REJECTED", message: "Credit limit exceeded.", rule_name: "CreditLimitRule" },
+          { status: 400 },
+        ),
+      ),
+    );
+    expect(await enroll(101)).toMatchObject({ status: "REJECTED", message: "Credit limit exceeded." });
+  });
+
+  it("still throws for a duplicate request (409 without a WAITLISTED body)", async () => {
+    await enroll(101);
+    await expect(enroll(101)).rejects.toBeInstanceOf(ApiError);
   });
 });
 
@@ -28,9 +49,9 @@ describe("my enrollments", () => {
 
 describe("my waitlist", () => {
   it("lists an entry with a queue position after joining a full section", async () => {
-    await enroll(104);
-    const entry = (await getMyWaitlist()).find((w) => w.section_id === 104);
-    expect(entry).toMatchObject({ section_id: 104, status: "WAITLISTED" });
+    await enroll(102);
+    const entry = (await getMyWaitlist()).find((w) => w.section_id === 102);
+    expect(entry).toMatchObject({ section_id: 102, course_code: "CS301", status: "WAITLISTED" });
     expect(entry?.position).toBeGreaterThan(0);
   });
 
@@ -45,10 +66,11 @@ describe("my waitlist", () => {
   });
 });
 
-describe("getStudent", () => {
-  it("returns the completed courses that validate-prereqs needs", async () => {
-    const student = await getStudent("65010042");
-    expect(student.student_id).toBe("65010042");
+describe("getMyProfile", () => {
+  it("returns the logged-in student's completed courses", async () => {
+    logIn("STU_001");
+    const student = await getMyProfile();
+    expect(student.id).toBe("STU_001");
     expect(student.completed_courses).toEqual(expect.arrayContaining(["CS101"]));
   });
 });

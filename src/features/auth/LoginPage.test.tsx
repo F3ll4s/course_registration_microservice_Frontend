@@ -16,12 +16,12 @@ describe("LoginPage", () => {
   it("logs in and goes to the registration page", async () => {
     const { user } = renderRoutes(routes, "/login");
 
-    await user.type(screen.getByLabelText("Student ID"), "65010042");
+    await user.type(screen.getByLabelText("Student ID"), "STU_001");
     await user.type(screen.getByLabelText("Password"), "secret");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
     expect(await screen.findByRole("heading", { name: "Registration page" })).toBeInTheDocument();
-    expect(useAuthStore.getState().studentId).toBe("65010042");
+    expect(useAuthStore.getState().studentId).toBe("STU_001");
   });
 
   it("returns to the page the student was trying to open", async () => {
@@ -29,7 +29,7 @@ describe("LoginPage", () => {
     // ProtectedRoute redirects with the original location in `state.from`
     await router.navigate("/login", { state: { from: { pathname: "/registered" } } });
 
-    await user.type(screen.getByLabelText("Student ID"), "65010042");
+    await user.type(screen.getByLabelText("Student ID"), "STU_001");
     await user.type(screen.getByLabelText("Password"), "secret");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
@@ -44,7 +44,7 @@ describe("LoginPage", () => {
     );
     const { user } = renderRoutes(routes, "/login");
 
-    await user.type(screen.getByLabelText("Student ID"), "65010042");
+    await user.type(screen.getByLabelText("Student ID"), "STU_001");
     await user.type(screen.getByLabelText("Password"), "wrong");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
@@ -78,15 +78,15 @@ describe("LoginPage", () => {
       expect(calls.count).toBe(0);
     });
 
-    it("rejects a student ID that is not 8 digits", async () => {
+    it("rejects a student ID with spaces or symbols", async () => {
       const calls = countLoginRequests();
       const { user } = renderRoutes(routes, "/login");
 
-      await user.type(screen.getByLabelText("Student ID"), "6501");
+      await user.type(screen.getByLabelText("Student ID"), "STU 001");
       await user.type(screen.getByLabelText("Password"), "secret");
       await user.click(screen.getByRole("button", { name: "Log in" }));
 
-      expect(await screen.findByText("Student ID must be 8 digits.")).toBeInTheDocument();
+      expect(await screen.findByText("Student ID can only contain letters, numbers and _.")).toBeInTheDocument();
       expect(screen.queryByText("Enter your password.")).not.toBeInTheDocument();
       expect(calls.count).toBe(0);
     });
@@ -94,14 +94,16 @@ describe("LoginPage", () => {
     it("clears the message once the field is fixed", async () => {
       const { user } = renderRoutes(routes, "/login");
       const studentId = screen.getByLabelText("Student ID");
+      const message = "Student ID can only contain letters, numbers and _.";
 
-      await user.type(studentId, "6501");
+      await user.type(studentId, "STU-001");
       await user.type(screen.getByLabelText("Password"), "secret");
       await user.click(screen.getByRole("button", { name: "Log in" }));
-      expect(await screen.findByText("Student ID must be 8 digits.")).toBeInTheDocument();
+      expect(await screen.findByText(message)).toBeInTheDocument();
 
-      await user.type(studentId, "0042");
-      await waitFor(() => expect(screen.queryByText("Student ID must be 8 digits.")).not.toBeInTheDocument());
+      await user.clear(studentId);
+      await user.type(studentId, "STU_001");
+      await waitFor(() => expect(screen.queryByText(message)).not.toBeInTheDocument());
       expect(studentId).not.toHaveAttribute("aria-invalid");
     });
   });

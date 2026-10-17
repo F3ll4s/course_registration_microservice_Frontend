@@ -7,10 +7,10 @@ import { sections } from "./catalog";
 // sessionStorage (see saveEnrollmentMock), so it survives a reload and resets when the tab is closed.
 // The demo student starts with the Penpot data; any other student id starts with nothing.
 // Seat counts live on `sections`, so they are shared: one student's drop frees a seat for everyone.
-export const DEMO_STUDENT = "65010042";
+export const DEMO_STUDENT = "STU_001";
 const DEMO_ENROLLED = [105, 108, 109, 110]; // CS410, CS315, GEN201, MTH205
 const DEMO_WAITLIST: WaitlistEntry[] = [
-  { offer_id: 1, section_id: 104, position: 3, status: "WAITLISTED", expires_at: null }, // CS305
+  { offer_id: 1, section_id: 104, course_code: "CS305", position: 3, status: "WAITLISTED", expires_at: null },
 ];
 const INITIAL_SEAT_COUNTS = new Map(sections.map((s) => [s.id, s.enrolled_count]));
 
@@ -98,57 +98,64 @@ export const enrollmentHandlers = [
   http.post("*/api/v1/enrollments", async ({ request }) => {
     const { enrolled, waitlist } = studentOf(request);
     const { section_id } = (await request.json()) as { section_id: number };
-    // In hybrid mode the real catalog may use other ids; then only 102 behaves as full
     const section = sections.find((s) => s.id === section_id);
-    const full = section ? section.enrolled_count >= section.capacity : section_id === 102;
+    if (!section) return HttpResponse.json({ detail: `Section ${section_id} not found.` }, { status: 404 });
+    if (enrolled.has(section_id) || waitlist.some((w) => w.section_id === section_id)) {
+      return HttpResponse.json({ detail: `Already enrolled or waitlisted in section ${section_id}.` }, { status: 409 });
+    }
 
-    if (full) {
+    if (section.enrolled_count >= section.capacity) {
       // Full section: backend answers 409 with a WAITLISTED body
-      if (!waitlist.some((w) => w.section_id === section_id)) {
-        waitlist.push({
-          offer_id: nextOfferId++,
-          section_id,
-          position: 1,
-          status: "WAITLISTED",
-          expires_at: null,
-        });
-      }
+      waitlist.push({
+        offer_id: nextOfferId++,
+        section_id,
+        course_code: section.course_code,
+        position: 1,
+        status: "WAITLISTED",
+        expires_at: null,
+      });
       return HttpResponse.json(
-        { status: "WAITLISTED", message: "Section full. Placed on waitlist." },
+        { status: "WAITLISTED", message: "Section full. Placed on waitlist.", waitlist_position: 1 },
         { status: 409 },
       );
     }
-    if (!enrolled.has(section_id)) {
-      enrolled.add(section_id);
-      if (section) section.enrolled_count += 1;
-    }
+    enrolled.add(section_id);
+    section.enrolled_count += 1;
     return HttpResponse.json(
       { status: "ENROLLED", message: "Successfully enrolled!" },
       { status: 201 },
     );
   }),
 
-  // Paths and response shapes below are assumed until the service is connected (README section 5)
+  // The real list also has DROPPED/REJECTED history, schedule and timestamps; the UI only reads these
   http.get("*/api/v1/enrollments/me", ({ request }) =>
     HttpResponse.json(
-      [...studentOf(request).enrolled].map((section_id) => ({ section_id, status: "ENROLLED" })),
+      [...studentOf(request).enrolled].map((section_id) => ({
+        enrollment_id: section_id,
+        section_id,
+        course_code: sections.find((s) => s.id === section_id)?.course_code,
+        status: "ENROLLED",
+      })),
     ),
   ),
 
   http.get("*/api/v1/waitlist/me", ({ request }) => HttpResponse.json(studentOf(request).waitlist)),
 
-  // Body confirmed by the backend team. Dropping a waitlisted section leaves the queue.
+  // Drops a section, or leaves its waitlist / declines its offer. 404 when there is nothing to drop.
   http.post("*/api/v1/drops", async ({ request }) => {
     const { enrolled, waitlist } = studentOf(request);
     const { section_id } = (await request.json()) as { section_id: number };
     if (enrolled.delete(section_id)) {
       const section = sections.find((s) => s.id === section_id);
       if (section) section.enrolled_count -= 1;
-    } else {
-      const i = waitlist.findIndex((w) => w.section_id === section_id);
-      if (i !== -1) waitlist.splice(i, 1);
+      return HttpResponse.json({ status: "DROPPED", message: `Dropped section ${section_id}.` });
     }
-    return HttpResponse.json({ status: "DROPPED" });
+    const i = waitlist.findIndex((w) => w.section_id === section_id);
+    if (i === -1) {
+      return HttpResponse.json({ detail: `No active enrollment for section ${section_id}.` }, { status: 404 });
+    }
+    waitlist.splice(i, 1);
+    return HttpResponse.json({ status: "DROPPED", message: `Removed from the waitlist for section ${section_id}.` });
   }),
 
   http.post("*/api/v1/waitlist/claim", async ({ request }) => {
