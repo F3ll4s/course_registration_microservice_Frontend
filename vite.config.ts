@@ -19,12 +19,6 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_GATEWAY_URL ?? "http://localhost:8000",
           changeOrigin: true,
         },
-        // /catalog/courses -> http://localhost:8002/courses (prefix stripped)
-        "/catalog": {
-          target: env.VITE_CATALOG_URL ?? "http://localhost:8002",
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/catalog/, ""),
-        },
       },
     },
     test: {

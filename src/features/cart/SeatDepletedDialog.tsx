@@ -63,7 +63,7 @@ export function SeatDepletedDialog({
       } else if (result.status === "WAITLISTED") {
         onDone(to);
       } else {
-        notify.error(`${sectionName(to)} not enrolled`, result.detail ?? "Enrollment rejected.");
+        notify.error(`${sectionName(to)} not enrolled`, result.message);
         onDone();
       }
     },

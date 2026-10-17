@@ -11,6 +11,27 @@ export type CartContext = {
 export type RuleResult = { rule: string; ok: boolean; message: string };
 export type CartRule = (ctx: CartContext) => RuleResult;
 
+// Prerequisite status per course code, from the course's prerequisite list and the student's
+// completed courses. Undefined while the completed courses are still loading.
+export function checkPrereqs(
+  rows: SectionRow[],
+  completed: string[] | undefined,
+): Record<string, PrereqResult | undefined> {
+  const byCode: Record<string, PrereqResult | undefined> = {};
+  if (!completed) return byCode;
+  for (const { course } of rows) {
+    const missing = course.prerequisites.filter((code) => !completed.includes(code));
+    byCode[course.code] = {
+      is_valid: missing.length === 0,
+      missing_prereqs: missing,
+      message: missing.length
+        ? `Missing required prerequisite(s): ${missing.join(", ")}`
+        : "All prerequisites satisfied.",
+    };
+  }
+  return byCode;
+}
+
 export function sectionsOverlap(a: Section, b: Section): boolean {
   const shareDay = a.schedule_days.some((d) => b.schedule_days.includes(d));
   return (

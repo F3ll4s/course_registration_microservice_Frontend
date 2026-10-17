@@ -21,7 +21,7 @@ function renderProvider() {
 
 describe("AppProvider", () => {
   it("forgets the previous student's data on logout", () => {
-    logIn("65010042");
+    logIn("STU_001");
     const client = renderProvider();
     client.setQueryData(["enrollments", "me"], [{ section_id: 105, status: "ENROLLED" }]);
 
@@ -30,7 +30,7 @@ describe("AppProvider", () => {
   });
 
   it("keeps the cache while the same student stays logged in", () => {
-    logIn("65010042");
+    logIn("STU_001");
     const client = renderProvider();
     client.setQueryData(["enrollments", "me"], []);
 

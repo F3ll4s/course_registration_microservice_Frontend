@@ -107,7 +107,7 @@ describe("CartDock", () => {
       // Make CS301 Sec 02 open and move it to Friday afternoon, clear of the enrolled classes
       sections.find((x) => x.id === 102)!.enrolled_count = 10;
       server.use(
-        http.get("*/catalog/sections", () =>
+        http.get("*/api/v1/sections", () =>
           HttpResponse.json(
             sections.map((s) =>
               s.id === 102 ? { ...s, schedule_days: ["FRI"], start_time: "13:00", end_time: "14:30" } : s,

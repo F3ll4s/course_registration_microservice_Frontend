@@ -31,6 +31,6 @@ export function renderRoutes(routes: RouteObject[], path = "/") {
 export const renderPage = (page: ReactElement) => renderRoutes([{ path: "*", element: page }]);
 
 // Puts a valid mock token in the auth store, as if the student had just logged in
-export function logIn(studentId = "65010042") {
+export function logIn(studentId = "STU_001") {
   useAuthStore.getState().login(fakeJwt(studentId));
 }

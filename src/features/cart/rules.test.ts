@@ -3,6 +3,7 @@ import type { Day, PrereqResult, SectionRow } from "@/api/types";
 import {
   canConfirm,
   type CartContext,
+  checkPrereqs,
   creditCapRule,
   MAX_CREDITS,
   prereqRule,
@@ -166,5 +167,27 @@ describe("runRules and canConfirm", () => {
     expect(canConfirm(over)).toBe(false);
     expect(canConfirm(clash)).toBe(false);
     expect(canConfirm(prereq)).toBe(false);
+  });
+});
+
+describe("checkPrereqs", () => {
+  const withPrereqs = (code: string, prerequisites: string[]) => {
+    const r = row(code);
+    return { ...r, course: { ...r.course, prerequisites } };
+  };
+
+  it("lists the prerequisites the student has not completed", () => {
+    const result = checkPrereqs([withPrereqs("CS301", ["CS102", "CS202"])], ["CS102"]);
+    expect(result.CS301).toMatchObject({ is_valid: false, missing_prereqs: ["CS202"] });
+  });
+
+  it("passes a course whose prerequisites are all completed, or that has none", () => {
+    const result = checkPrereqs([withPrereqs("CS301", ["CS102"]), withPrereqs("CS101", [])], ["CS102"]);
+    expect(result.CS301?.is_valid).toBe(true);
+    expect(result.CS101?.is_valid).toBe(true);
+  });
+
+  it("returns nothing while the completed courses are still loading", () => {
+    expect(checkPrereqs([withPrereqs("CS301", ["CS102"])], undefined)).toEqual({});
   });
 });

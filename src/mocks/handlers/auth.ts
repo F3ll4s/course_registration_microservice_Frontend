@@ -10,6 +10,8 @@ export const fakeJwt = (sub: string) =>
 export const authHandlers = [
   http.post("*/api/v1/auth/login", async ({ request }) => {
     const { student_id } = (await request.json()) as { student_id: string; password: string };
-    return HttpResponse.json({ access_token: fakeJwt(student_id), token_type: "bearer" });
+    // Like the backend: any password works in the mock, and the id is stored upper case
+    const id = student_id.trim().toUpperCase();
+    return HttpResponse.json({ access_token: fakeJwt(id), token_type: "bearer", role: "STUDENT", student_id: id });
   }),
 ];

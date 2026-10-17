@@ -80,7 +80,7 @@ export const sections: Section[] = [
 ];
 
 export const catalogHandlers = [
-  http.get("*/catalog/courses", ({ request }) => {
+  http.get("*/api/v1/courses", ({ request }) => {
     const q = new URL(request.url).searchParams.get("search")?.toLowerCase();
     return HttpResponse.json(
       courses.filter(
@@ -89,7 +89,7 @@ export const catalogHandlers = [
     );
   }),
 
-  http.get("*/catalog/sections", ({ request }) => {
+  http.get("*/api/v1/sections", ({ request }) => {
     const p = new URL(request.url).searchParams;
     const code = p.get("course_code");
     const day = p.get("day");
@@ -102,22 +102,5 @@ export const catalogHandlers = [
           (!openOnly || s.enrolled_count < s.capacity),
       ),
     );
-  }),
-
-  http.post("*/catalog/validate-prereqs", async ({ request }) => {
-    const { course_code, completed_courses } = (await request.json()) as {
-      student_id: string;
-      course_code: string;
-      completed_courses: string[];
-    };
-    const required = courses.find((c) => c.code === course_code)?.prerequisites ?? [];
-    const missing = required.filter((c) => !completed_courses.includes(c));
-    return HttpResponse.json({
-      is_valid: missing.length === 0,
-      missing_prereqs: missing,
-      message: missing.length
-        ? `Missing required prerequisite(s): ${missing.join(", ")}`
-        : "All prerequisites satisfied.",
-    });
   }),
 ];

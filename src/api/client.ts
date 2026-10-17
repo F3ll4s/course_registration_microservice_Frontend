@@ -1,7 +1,6 @@
 import { useAuthStore } from "@/features/auth/store";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
-const CATALOG_BASE = import.meta.env.VITE_CATALOG_BASE_URL ?? "/catalog";
 
 export class ApiError extends Error {
   status: number;
@@ -39,10 +38,6 @@ export async function request<T>(base: string, path: string, init: RequestInit =
   return body as T;
 }
 
-// Gateway: auth, enrollments, drops, waitlist
+// Everything goes through the API gateway: auth, catalog, students, enrollments, drops, waitlist.
+// The gateway checks the JWT and passes the student id on, so requests never name the student.
 export const api = <T>(path: string, init?: RequestInit) => request<T>(API_BASE, path, init);
-
-// Catalog service: courses, sections, validate-prereqs.
-// Today this is the catalog on :8002 via the /catalog proxy; later the gateway may front it.
-export const catalogApi = <T>(path: string, init?: RequestInit) =>
-  request<T>(CATALOG_BASE, path, init);

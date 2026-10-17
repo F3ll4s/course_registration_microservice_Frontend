@@ -48,7 +48,7 @@ export function useConfirmCart() {
       for (const o of outcomes.filter((x) => x.error || status(x) === "REJECTED")) {
         notify.error(
           `${sectionName(o.row)} not enrolled`,
-          o.error ? toUserMessage(o.error) : (o.result?.detail ?? "Enrollment rejected."),
+          o.error ? toUserMessage(o.error) : (o.result?.message ?? "Enrollment rejected."),
         );
       }
     },

@@ -20,12 +20,8 @@ export type Section = {
   instructor: string;
 };
 
-export type PrereqRequest = {
-  student_id: string;
-  course_code: string;
-  completed_courses: string[];
-};
-
+// Worked out in the browser (checkPrereqs in features/cart/rules.ts); the gateway doesn't expose
+// the catalog's validate-prereqs endpoint. The backend checks prerequisites again on enroll.
 export type PrereqResult = {
   is_valid: boolean;
   missing_prereqs: string[];
@@ -35,20 +31,31 @@ export type PrereqResult = {
 /** A section joined with its course. Sections carry no title or credits, so every view renders this. */
 export type SectionRow = { section: Section; course: Course };
 
-// The three shapes below are not confirmed by the backend team yet (README section 5, requests 1 to 3).
-// They are what the UI needs; adjust them here once the real endpoints exist.
+// Shapes from the backend (Tock15/course_registration_microservice, enrollment_service/schemas.py
+// and common/schemas.py). Only the fields the UI reads are listed.
 
+// GET /enrollments/me returns every record, including DROPPED and REJECTED history
 export type Enrollment = {
+  enrollment_id: number;
   section_id: number;
-  status: "STAGED" | "OFFERED" | "ENROLLED" | "DROPPED" | "WAITLISTED";
+  course_code: string;
+  status: "STAGED" | "ENROLLED" | "WAITLISTED" | "OFFERED" | "DROPPED" | "REJECTED";
 };
 
 export type WaitlistEntry = {
-  offer_id: number;
+  offer_id: number; // pass to POST /waitlist/claim
   section_id: number;
-  position: number; // 1 = next in line
+  course_code: string;
+  position: number; // 1 = next in line, and 1 while OFFERED
   status: "WAITLISTED" | "OFFERED";
-  expires_at: string | null; // set once a seat is offered
+  expires_at: string | null; // claim deadline (UTC) once a seat is offered
 };
 
-export type Student = { student_id: string; completed_courses: string[] };
+// GET /students/me
+export type Student = {
+  id: string; // "STU_001"
+  name: string;
+  completed_courses: string[];
+  enrolled_credits: number;
+  max_credits: number;
+};

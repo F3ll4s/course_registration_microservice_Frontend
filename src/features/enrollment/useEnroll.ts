@@ -15,7 +15,7 @@ export function useEnroll() {
       if (result.status === "ENROLLED") notify.success("Enrollment successful", "You are enrolled!");
       else if (result.status === "WAITLISTED")
         notify.waitlist("Added to waitlist", "Section is full. You were added to the waitlist.");
-      else notify.error("Enrollment rejected", result.detail ?? "Enrollment was rejected.");
+      else notify.error("Enrollment rejected", result.message);
     },
     onError: (err) => notify.error("Enrollment failed", toUserMessage(err)),
   });

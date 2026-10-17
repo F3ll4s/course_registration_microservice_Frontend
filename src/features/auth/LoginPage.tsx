@@ -71,9 +71,8 @@ export function LoginPage() {
           </label>
           <input
             id="studentId"
-            inputMode="numeric"
             autoComplete="username"
-            placeholder="e.g. 65010042"
+            placeholder="e.g. STU_001"
             aria-invalid={errors.studentId ? true : undefined}
             aria-describedby={errors.studentId ? "studentId-error" : undefined}
             className={cn(INPUT, "placeholder:text-[#94a3b8]")}

@@ -38,7 +38,7 @@ describe("TimetableCard", () => {
   });
 
   it("shows only the logged-in student's classes", async () => {
-    logIn("65010099"); // any other student starts with no enrollments in the mock
+    logIn("STU_099"); // any other student starts with no enrollments in the mock
     renderPage(<TimetableCard />);
 
     expect(await screen.findByText("No Classes Scheduled Yet")).toBeInTheDocument();

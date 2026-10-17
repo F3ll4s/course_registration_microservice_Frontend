@@ -4,8 +4,8 @@ import { App } from "./app/App";
 import "./index.css"; // Tailwind + shadcn theme. Without this line no styles load.
 
 async function bootstrap() {
-  // `mock`: mock everything. `hybrid`: mock only the gateway; /catalog/* passes through to the real service.
-  if (import.meta.env.MODE === "mock" || import.meta.env.MODE === "hybrid") {
+  // `mock`: answer every API call from src/mocks instead of the backend
+  if (import.meta.env.MODE === "mock") {
     const { startMocking } = await import("./mocks/browser");
     startMocking();
   }
